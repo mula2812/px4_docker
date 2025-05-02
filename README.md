@@ -1,6 +1,8 @@
 ## Overview 😊
 
-This repository provides a **containerized PX4 SITL** environment **with ROS 2** on Ubuntu 22.04, complete with **Gazebo Classic** and **mavlink-router**. It lets you:
+This repository provides a **containerized PX4 SITL** environment **with ROS 2** on Ubuntu 22.04, complete with **Gazebo Classic** and **mavlink-router**.
+
+It lets you:
 
 1. Quickly build or load a prebuilt Docker image
 2. Override the simulated drone’s home position via environment variables
@@ -12,7 +14,7 @@ This repository provides a **containerized PX4 SITL** environment **with ROS 2*
 ## 1. Prerequisites
 
 - Docker (Desktop or Engine) installed
-- (Optional) `px4_docker.zip` if you want to load a saved image
+- (Optional) `px4_sitl.zip` if you want to load a saved image
 - Python 3.8+ and `pip` for running the mission script
 
 ---
@@ -28,16 +30,19 @@ docker build \
   -t px4_sitl .
 ```
 
+**Note:** It is recommended to leave the version as it is on ubuntu:22.04
+But if you want to change, you can, and it is recommended to check the integrity of the docker afterwards before any significant operation.
+
 ### 2.2 Load from Archive
 
-If you have a `px4_docker.zip` archive:
+If you have a `px4_sitl.zip` archive:
 
-1. Unzip it anywhere. You will find `px4_docker.tar.gz` (or `.tar`).
+1. Unzip it anywhere. You will find `px4_sitl.tar.gz` (or `.tar`).
 2. In your terminal, `cd` to the directory containing that file.
 3. Load the image into Docker:
 
    ```bash
-   docker load --input px4_docker.tar.gz
+   docker load --input px4_sitl.tar.gz
    ```
 
 After this, you should see `px4_sitl:latest` listed when you run:
@@ -49,10 +54,20 @@ docker images | grep px4_sitl
 > **Tip:** To create your own tarball from a local image, run:
 >
 > ```bash
-> docker save -o px4_docker.tar.gz px4_sitl:latest
+> docker save -o px4_sitl.tar.gz px4_sitl:latest
 > ```
 
 ---
+
+### 2.3 pull from DockerHub
+
+in your cmd write:
+
+```
+docker pull ilanmulakandov/px4_sitl
+```
+
+it will get you allways the latest version
 
 ## 3. Running the PX4 SITL Container
 
