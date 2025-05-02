@@ -52,26 +52,6 @@ ENV PATH="/Firmware/mavlink-router/build:${PATH}"
 # Optional: Install screen if you want to run PX4 in a detachable session
 # RUN apt-get install -y screen
 
-# Set up environment variables
-ENV PX4_HOME_LAT=47.397751
-ENV PX4_HOME_LON=8.545607
-ENV PX4_HOME_ALT=488.13123
-
-# Set environment variables for UDP forwarding
-ENV LISTEN_IP=127.0.0.1
-ENV MAVSDK_IP=10.0.0.1
-ENV QGC_IP=10.0.0.1
-ENV CONTROL_IP=10.0.0.1
-
-ENV LISTEN_PORT=14540
-ENV MAVSDK_PORT=14540
-ENV QGC_PORT=14550
-ENV CONTROL_PORT=14581
-ENV MAVSDK_SERVER_PORT=50051
-ENV MAVSDK_SERVER_IP=10.0.0.1
-
-ENV px4_start_command="make px4_sitl gazebo-classic"
-
 # entry point dir for px4
 WORKDIR /Firmware
 
@@ -80,17 +60,18 @@ RUN make px4_sitl all
 
 RUN DONT_RUN=1 make px4_sitl gazebo-classic -j$(nproc)
 
-# ENV CUSTOM_STARTUP_SCRIPT_PORT=14541
+# Set up environment variables
+ENV PX4_HOME_LAT=47.397751
+ENV PX4_HOME_LON=8.545607
+ENV PX4_HOME_ALT=488.13123
 
-# COPY custom_startup.py /Firmware/custom_startup.py
-# RUN chmod +x /Firmware/custom_startup.py
+# Set environment variables for UDP forwarding
+ENV QGC_IP=10.0.0.16
+ENV CONTROL_IP=10.0.0.16
 
-# # Replace position in Gazebo world files to match PX4_HOME env
-# RUN find /Firmware -type f -name "*.world" -exec sed -i \
-#     -e "s|<latitude>.*</latitude>|<latitude>${PX4_HOME_LAT}</latitude>|g" \
-#     -e "s|<longitude>.*</longitude>|<longitude>${PX4_HOME_LON}</longitude>|g" \
-#     -e "s|<altitude>.*</altitude>|<altitude>${PX4_HOME_ALT}</altitude>|g" {} \;
+ENV CONTROL_PORT=14540
+ENV QGC_PORT=14550
 
+ENV px4_start_command="make px4_sitl gazebo-classic"
 
-# CMD ["bash", "-c", "export PX4_HOME_LAT=${PX4_HOME_LAT} && export PX4_HOME_LON=${PX4_HOME_LON} && export PX4_HOME_ALT=${PX4_HOME_ALT} && mavlink-routerd -e ${MAVSDK_SERVER_IP}:${MAVSDK_SERVER_PORT} -e 127.0.0.1:${CUSTOM_STARTUP_SCRIPT_PORT} -e ${MAVSDK_IP}:${MAVSDK_PORT} -e ${QGC_IP}:${QGC_PORT} -e ${CONTROL_IP}:${CONTROL_PORT} ${LISTEN_IP}:${LISTEN_PORT} & ${px4_start_command} & sleep 11 && python3 /Firmware/custom_startup.py & wait"]
-CMD ["bash", "-c", "export PX4_HOME_LAT=${PX4_HOME_LAT} && export PX4_HOME_LON=${PX4_HOME_LON} && export PX4_HOME_ALT=${PX4_HOME_ALT} && mavlink-routerd -e ${MAVSDK_SERVER_IP}:${MAVSDK_SERVER_PORT} -e ${MAVSDK_IP}:${MAVSDK_PORT} -e ${QGC_IP}:${QGC_PORT} -e ${CONTROL_IP}:${CONTROL_PORT} ${LISTEN_IP}:${LISTEN_PORT} & ${px4_start_command}"]
+CMD ["bash", "-c", "mavlink-routerd -e ${QGC_IP}:${QGC_PORT} -e ${CONTROL_IP}:${CONTROL_PORT} & export PX4_HOME_LAT=${PX4_HOME_LAT} && export PX4_HOME_LON=${PX4_HOME_LON} && export PX4_HOME_ALT=${PX4_HOME_ALT} && ${px4_start_command}"]
