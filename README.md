@@ -1,29 +1,49 @@
 ## Overview 😊
 
-#### Created by ilan mulakandov
+#### Created by Ilan Mulakandov
 
-This repository provides a **containerized PX4 SITL** environment **with ROS 2** on Ubuntu 22.04, complete with **Gazebo Classic** and **mavlink-router**.
+This project gives you a complete, ready-to-run **drone simulator** inside Docker on Ubuntu 22.04.
 
-It lets you:
+It includes:
 
-1. Quickly build or load a prebuilt Docker image
-2. Override the simulated drone’s home position via environment variables
-3. Run headless SITL + Gazebo with all MAVLink ports exposed
-4. Automate missions using a companion Python script with **pymavlink**
+- **PX4 SITL** (the flight software that runs in “Software In The Loop” mode)
+- **ROS 2** (a common robotics toolkit)
+- **Gazebo Classic** (a 3D world physical simulator)
+- **mavlink-router** (קxposes a communication path for observing and controlling platform behavior)
 
----
+With it you can:
 
-## 1. Prerequisites
+1. Pull ("Download") or build the simulator image in seconds
+2. Set your own “home” location for the virtual drone
+3. Run everything without opening any graphics windows
+4. Automate flights with a simple Python script
 
-- Docker (Desktop or Engine) installed
-- (Optional) `px4_sitl.zip` if you want to load a saved image
-- Python 3.8+ and `pip` for running the mission script
+## 1. What You Need (Prerequisites)
 
----
+- **Docker Desktop** installed on your computer
+- (Optional) A zip file called `px4_sitl.zip` if you want to load a saved simulator image
+- **Python 3.8+** and **pip** to run the example flight script
 
-## 2. Building & Loading the Docker Image
+## 2. Getting the Simulator Image
 
-### 2.1 Build from Source
+### 2.1 Pull ("Download") from Docker Hub
+
+Just type this in your command line:
+
+```bash
+docker pull ilanmulakandov/px4_sitl
+```
+
+This always grabs the latest version.
+For checking you have it, write this command at your command line:
+
+```bash
+docker images | grep px4_sitl
+```
+
+### 2.2 Build Yourself (Optional)
+
+If you’d rather build the image from scratch:
 
 ```bash
 docker build \
@@ -32,46 +52,36 @@ docker build \
   -t px4_sitl .
 ```
 
-**Note:** It is recommended to leave the version as it is on ubuntu:22.04
+**Note:** It is recommended to stick with Ubuntu 22.04 for best results.
 But if you want to change, you can, and it is recommended to check the integrity of the docker afterwards before any significant operation.
 
-### 2.2 Load from Archive
+### 2.3 Load from Archive (Optional)
 
-If you have a `px4_sitl.zip` archive:
+If you have a `px4_sitl.zip` file:
 
-1. Unzip it anywhere. You will find `px4_sitl.tar.gz` (or `.tar`).
-2. In your terminal, `cd` to the directory containing that file.
-3. Load the image into Docker:
+1. Unzip it to find `px4_sitl.tar.gz`.
+2. In your terminal, `cd` into the directory containing that file.
+3. Run:
 
    ```bash
    docker load --input px4_sitl.tar.gz
    ```
 
-After this, you should see `px4_sitl:latest` listed when you run:
+4. Verify with:
+
+   ```bash
+   docker images | grep px4_sitl
+   ```
+
+**Tip:** To save your own image as a ZIP, use:
 
 ```bash
-docker images | grep px4_sitl
+docker save -o px4_sitl.tar.gz px4_sitl:latest
 ```
 
-> **Tip:** To create your own tarball from a local image, run:
->
-> ```bash
-> docker save -o px4_sitl.tar.gz px4_sitl:latest
-> ```
+## 3. Running the Simulator independently
 
----
-
-### 2.3 pull from DockerHub
-
-in your cmd write:
-
-```
-docker pull ilanmulakandov/px4_sitl
-```
-
-it will get you allways the latest version
-
-## 3. Running the PX4 SITL Container
+Start the simulator (headless) with:
 
 ```bash
 docker run --rm -it \
@@ -83,43 +93,43 @@ docker run --rm -it \
   px4_sitl
 ```
 
-1. **mavlink-routerd** starts in the background, forwarding MAVLink traffic to any endpoints.
-2. Environment variables for **PX4_HOME\_**\* are exported **before** SITL starts.
-3. PX4 SITL launches with Gazebo Classic automatically.
-4. Because UDP port **14550** is exposed for _`QGroundControl`_ (-p 14550:14550/udp), you can simply open QGC on your host and connect to **UDP** port **14550** to view the simulated vehicle’s telemetry and position—no additional port remapping needed.
+And what actually happens when you run this command?
 
-   **Note:** If you use run_mission script, this port will be changed according to the existing and running of the same containers in your Docker Desktop. It will go to 14551,14552, and so on until 14559 (you can change the range inside the script).
+- **mavlink-router** will launch in the background for data routing.
+- Your chosen home coordinates are applied before the simulator starts (**PX4_HOME** variables).
+- PX4 SITL launches with Gazebo Classic automatically.
+- Since port **14550** is open, you can point _**QGroundControl**_ (Real-time drone monitoring app) at UDP port **14550** and immediately see the drone’s location and status-no extra setup needed.
 
----
+> **Note:** If you use the `run_mission.py` script, Each new container may shift ports (e.g., 14551, 14552…) to avoid conflicts. You can adjust this range in the script and the port at QGC for visualization.
 
-## 4. Configurable Environment Variables
+## 4. Custom Settings
 
-| Variable       | Default     | Description                      |
-| -------------- | ----------- | -------------------------------- |
-| `PX4_HOME_LAT` | `47.397751` | Home latitude (decimal degrees)  |
-| `PX4_HOME_LON` | `8.545607`  | Home longitude (decimal degrees) |
-| `PX4_HOME_ALT` | `488.13123` | Home altitude (meters MSL)       |
-| `QGC_IP`       | `10.0.0.16` | QGroundControl IP                |
-| `QGC_PORT`     | `14550`     | QGroundControl UDP port          |
-| `CONTROL_IP`   | `10.0.0.16` | Custom control software IP       |
-| `CONTROL_PORT` | `14540`     | Custom control software port     |
+You can tweak these values when you run the container:
 
----
+| Name           | Default     | What It Means                              |
+| -------------- | ----------- | ------------------------------------------ |
+| `PX4_HOME_LAT` | `47.397751` | Starting latitude of your virtual drone    |
+| `PX4_HOME_LON` | `8.545607`  | Starting longitude of your virtual drone   |
+| `PX4_HOME_ALT` | `488.13123` | Starting altitude (in meters)              |
+| `QGC_IP`       | `10.0.0.16` | IP address for QGroundControl (your PC)    |
+| `QGC_PORT`     | `14550`     | UDP port for QGroundControl                |
+| `CONTROL_IP`   | `10.0.0.16` | IP address for any custom control software |
+| `CONTROL_PORT` | `14540`     | UDP port for custom control software       |
 
-## 5. Automated Mission Script
+## 5. Runing Automating Flights
 
 ### 5.1 `run_mission.py`
 
-This asyncio‑based Python script will:
+This Python script will:
 
-1. Launch a uniquely named PX4 container
-2. Connect via **pymavlink** over UDP
-3. Wait for heartbeat and arm the vehicle
-4. Send a mission (takeoff + waypoint)
-5. Switch to **TAKEOFF** and then **RTL** mode
-6. Clean up the container when finished
+1. Launch a new PX4 container with a unique name
+2. Connect over UDP to the simulator
+3. Wait for the “heartbeat,” then arm the drone
+4. Send it a simple mission (takeoff + one waypoint)
+5. Switch to **TAKEOFF** then **RTL** (return-to-launch) mode
+6. Stop and remove the container when done
 
-**Note:** you must change all variables to ones that suit your desires and computer (pay close attention to changing the variables that are marked as needing to be changed)
+> **Tip:** Edit the script’s top section to match your IP, ports, and home coordinates.
 
 ```python
 import asyncio
@@ -153,26 +163,21 @@ Install with:
 pip install -r requirements.txt
 ```
 
----
+## 6. Why ROS 2 Is Included 🚀
 
-## 6. Why ROS 2 Is Included 🚀
+Even if you don’t use ROS 2 directly, having it in the same container means:
 
-Including **ROS 2** in this container offers:
+1. You can run tools like **rviz2** or **ros2 topic echo** without extra setup.
+2. Developers who build advanced behaviors (SLAM, navigation) can start immediately.
+3. All dependencies live in one place-no version clashes.
 
-1. **Full ROS 2 Integration**: Run `rviz2`, `ros2 topic echo /fcu/gps` or `ros2 run mavros mavsys mode -c OFFBOARD` alongside PX4 and Gazebo.
-2. **Rapid Development & Debugging**: Use `rqt_graph`, `ros2 param`, and `rosbag2` without bridging multiple containers.
-3. **Unified Dependencies**: One image bundles PX4, Gazebo, mavlink-router, and a fixed ROS 2 distro (Galactic/Humble).
-4. **Ready for Advanced Workflows**: Add SLAM, navigation2, sensor drivers, or other ROS 2 stacks without rebuilding.
-
-This all‑in‑one design keeps your CI pipeline lean, development smooth, and simulation flexible. 😄
-
----
+This all-in-one setup keeps development smooth and simulation flexible-making it easy to get started. 😄
 
 ## 7. Best Practices & Tips
 
-- **Export env first**: Ensures `PX4_HOME_*` are applied correctly.
+- **Set home first:** Always pass your `PX4_HOME_*` values before launching.
 - **Unique container names**: Prevent collisions in parallel runs.
-- **Use `--rm`**: Automatically cleans up stopped containers.
-- **Air‑gapped CI**: Leverage `docker save`/`load` for reproducible builds without internet.
+- **Auto-cleanup:** `--rm` makes Docker delete the container when it stops.
+- **Offline builds:** Use `docker save`/`load` to share images without internet.
 
 Happy flying! 🛩️
