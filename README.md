@@ -9,7 +9,7 @@ It includes:
 - **PX4 SITL** (the flight software that runs in “Software In The Loop” mode)
 - **ROS 2** (a common robotics toolkit)
 - **Gazebo Classic** (a 3D world physical simulator)
-- **mavlink-router** (קxposes a communication path for observing and controlling platform behavior)
+- **mavlink-router** (exposes a communication path for observing and controlling platform behavior)
 
 With it you can:
 
