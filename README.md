@@ -9,7 +9,7 @@ It includes:
 - **PX4 SITL** (the flight software that runs in “Software In The Loop” mode)
 - **ROS 2** (a common robotics toolkit)
 - **Gazebo Classic** (a 3D world physical simulator)
-- **mavlink-router** (exposes a communication path for observing and controlling platform behavior)
+- **mavlink-router** (קxposes a communication path for observing and controlling platform behavior)
 
 With it you can:
 
@@ -87,6 +87,8 @@ Start the simulator (headless) with:
 docker run --rm -it \
   -p 14540:14540/udp \
   -p 14550:14550/udp \
+  -e QGC_IP=10.0.0.16 \
+  -e CONTROL_IP=10.0.0.8 \
   -e PX4_HOME_LAT=47.3977 \
   -e PX4_HOME_LON=8.5456 \
   -e PX4_HOME_ALT=488.0 \
