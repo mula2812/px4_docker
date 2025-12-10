@@ -46,11 +46,14 @@ RUN git submodule update --init --recursive && \
     ninja -C build && \
     ninja -C build install
 
+RUN mkdir -p /etc/mavlink-router && \
+    echo "[General]" > /etc/mavlink-router/main.conf
+
 # Ensure mavlink-router binaries are in PATH
 ENV PATH="/Firmware/mavlink-router/build:${PATH}"
 
 # Optional: Install screen if you want to run PX4 in a detachable session
-# RUN apt-get install -y screen
+RUN apt-get install -y screen
 
 # entry point dir for px4
 WORKDIR /Firmware
@@ -71,7 +74,8 @@ ENV CONTROL_IP=10.0.0.16
 
 ENV CONTROL_PORT=14540
 ENV QGC_PORT=14550
+ENV INTERNAL_DIRECTION=127.0.0.1:14550
 
 ENV px4_start_command="make px4_sitl gazebo-classic"
 
-CMD ["bash", "-c", "mavlink-routerd -e ${QGC_IP}:${QGC_PORT} -e ${CONTROL_IP}:${CONTROL_PORT} & export PX4_HOME_LAT=${PX4_HOME_LAT} && export PX4_HOME_LON=${PX4_HOME_LON} && export PX4_HOME_ALT=${PX4_HOME_ALT} && ${px4_start_command}"]
+CMD ["bash", "-c", "mavlink-routerd -e ${QGC_IP}:${QGC_PORT} -e ${CONTROL_IP}:${CONTROL_PORT} ${INTERNAL_DIRECTION} & export PX4_HOME_LAT=${PX4_HOME_LAT} && export PX4_HOME_LON=${PX4_HOME_LON} && export PX4_HOME_ALT=${PX4_HOME_ALT} && HEADLESS=1 ${px4_start_command}"]
