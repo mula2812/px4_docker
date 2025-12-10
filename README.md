@@ -102,7 +102,7 @@ And what actually happens when you run this command?
 - PX4 SITL launches with Gazebo Classic automatically.
 - Since port **14550** is open, you can point _**QGroundControl**_ (Real-time drone monitoring app) at UDP port **14550** and immediately see the drone’s location and status-no extra setup needed.
 
-> **Note:** If you use the `run_mission.py` script, Each new container may shift ports (e.g., 14551, 14552…) to avoid conflicts. You can adjust this range in the script and the port at QGC for visualization.
+> **Note:** If you use the `run_mission.py` script, the script uses fixed ports (14540/14550). To run multiple instances simultaneously, manually change these values in the script to avoid conflicts.
 
 ## 4. Custom Settings
 
@@ -118,18 +118,21 @@ You can tweak these values when you run the container:
 | `CONTROL_IP`   | `10.0.0.16` | IP address for any custom control software |
 | `CONTROL_PORT` | `14540`     | UDP port for custom control software       |
 
-## 5. Runing Automating Flights
+## 5. Running Automated Flights
 
 ### 5.1 `run_mission.py`
 
-This Python script will:
+This Python script executes a robust single-drone mission with safety mechanisms. It will:
 
-1. Launch a new PX4 container with a unique name
-2. Connect over UDP to the simulator
-3. Wait for the “heartbeat,” then arm the drone
-4. Send it a simple mission (takeoff + one waypoint)
-5. Switch to **TAKEOFF** then **RTL** (return-to-launch) mode
-6. Stop and remove the container when done
+1.  **Launch** a new PX4 container with a unique name.
+2.  **Connect** over UDP to the simulator.
+3.  **Takeoff** using **Offboard** control to a set altitude.
+4.  **Upload** a "Triangle" mission (3 waypoints relative to the home location).
+5.  **Execute** the mission in **AUTO** mode.
+6.  **Monitor** progress using a **Watchdog**:
+    - If the drone gets stuck between waypoints, the script detects it and resends commands.
+7.  **Land** at the final position (instead of RTL) and disarm.
+8.  **Cleanup**: Stops and removes the container automatically.
 
 > **Tip:** Edit the script’s top section to match your IP, ports, and home coordinates.
 
@@ -137,23 +140,29 @@ This Python script will:
 import asyncio
 import subprocess
 import uuid
-import json
+import math
 from pymavlink import mavutil
 
-# Global configuration
-global control_port,qgc_port
-control_port = 14540 # can be change but not recommended if you use it only until 10 containers
-qgc_port = 14550 # can be change but not recommended if you use it only until 10 containers
-DOCKER_IMAGE = "px4_sitl" # Replace with your actual Docker image name
-LOCAL_IP = "10.0.0.16"  # Replace with your actual local IP
-PX4_HOME_LAT=47.397751 # Replace with your actual latitude
-PX4_HOME_LON=8.545607 # Replace with your actual longitude
-PX4_HOME_ALT=488.13123 # Replace with your actual altitude
+# --- Constants ---
+# IP Configuration
+LOCAL_IP = "10.0.0.16"       # Replace with your actual local IP
+DOCKER_IMAGE = "px4_sitl"
+
+# PX4 Home Location
+PX4_HOME_LAT = 47.397751
+PX4_HOME_LON = 8.545607
+PX4_HOME_ALT = 488.13123
+
+# Ports
+CONTROL_PORT = 14540
+QGC_PORT = 14550
 
 # … rest of script …
 ```
 
 ### 5.2 `requirements.txt`
+
+The script relies on pymavlink for communication and standard Python libraries (asyncio, subprocess, math).
 
 ```text
 pymavlink>=2.4.15
